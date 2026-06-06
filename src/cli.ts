@@ -140,7 +140,7 @@ program.command('setup:notion-schema')
   .action(async (opts) => {
     if (!opts.write) {
       console.log(schemaInstructions());
-      console.log('\nDry-run only. To create DBs: add NOTION_TOKEN and NOTION_PARENT_PAGE_ID to .env, then run: npm run dev -- --env .env setup:notion-schema --write');
+      console.log('\nDry-run only. To create DBs: add NOTION_TOKEN and NOTION_PARENT_PAGE_ID to .env, then run: li-saves --env .env setup:notion-schema --write');
       return;
     }
     const token = process.env.NOTION_TOKEN;

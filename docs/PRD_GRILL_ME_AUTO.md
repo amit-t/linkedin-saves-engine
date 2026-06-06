@@ -441,16 +441,16 @@ Rationale: Jitter reduces load; stealth evasion increases ethical/platform risk.
 Recommended answer:
 
 ```text
---env .env sync --dry-run --limit 50
---env .env sync --limit 50
---env .env sync --export-path <archive-or-csv>
---env .env fetch --limit 10 --format markdown
---env .env save-approved approved-ideas.json
---env .env drop-save SOURCE_PAGE_ID
---env .env profile:brand:validate --brand <brand-id>
---env .env setup:notion-schema
---env .env setup:notion-schema --write
---env .env doctor
+li-saves --env .env sync --dry-run --limit 50
+li-saves --env .env sync --limit 50
+li-saves --env .env sync --export-path <archive-or-csv>
+li-saves --env .env fetch --limit 10 --format markdown
+li-saves --env .env save-approved approved-ideas.json
+li-saves --env .env drop-save SOURCE_PAGE_ID
+li-saves --env .env profile:brand:validate --brand <brand-id>
+li-saves --env .env setup:notion-schema
+li-saves --env .env setup:notion-schema --write
+li-saves --env .env doctor
 ```
 
 Rationale: Mirror Instagram Saves Engine muscle memory: sync source saves, fetch review batch, save approved ideas, drop rejected saves. Keep legacy/developer aliases only as secondary convenience.

@@ -206,7 +206,7 @@ Risk boundaries:
 
 ### 11.3 Export reconciliation
 
-- Provide export ingestion through the primary Instagram-style sync verb: `--env .env sync --export-path <archive-or-csv>`.
+- Provide export ingestion through the primary Instagram-style sync verb: `li-saves --env .env sync --export-path <archive-or-csv>`.
 - Parse LinkedIn export `Saved Items` for saved date and URL.
 - Match export rows to browser-captured records by platform ID when inferable, then canonical URL hash, then original URL hash.
 - Preserve export-only rows as metadata-only/tombstone records.
@@ -253,14 +253,14 @@ Risk boundaries:
 The engine exposes generic command packs, not one fixed output and not hard-coded brand commands:
 
 ```text
---env .env sync --dry-run --limit 50
---env .env sync --limit 50
---env .env fetch --limit 10 --format markdown
---env .env save-approved approved-ideas.json
---env .env drop-save SOURCE_PAGE_ID
---env .env doctor
---env .env setup:notion-schema
---env .env setup:notion-schema --write
+li-saves --env .env sync --dry-run --limit 50
+li-saves --env .env sync --limit 50
+li-saves --env .env fetch --limit 10 --format markdown
+li-saves --env .env save-approved approved-ideas.json
+li-saves --env .env drop-save SOURCE_PAGE_ID
+li-saves --env .env doctor
+li-saves --env .env setup:notion-schema
+li-saves --env .env setup:notion-schema --write
 ```
 
 The primary verbs intentionally mirror the Instagram Saves Engine:

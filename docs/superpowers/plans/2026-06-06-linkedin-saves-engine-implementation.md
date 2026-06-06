@@ -68,20 +68,22 @@
 ## Task 7: CLI, docs, demo
 
 - [x] Add primary Instagram-style commands: `sync`, `fetch`, `save-approved`, `drop-save`; retain developer aliases: `doctor`, `setup:notion-schema`, `import:linkedin-export`, `profile:brand:validate`, `generate:ideas`, `demo`.
+- [x] Add easy global aliases: `li-saves`, `linkedin-saves-engine`, `linkedin-content-ideas`.
 - [x] Add synthetic fixtures for demo.
 - [x] Write `docs/SETUP.md` with exact Notion DB setup and browser setup instructions.
 - [x] Write `docs/DEMO.md` and run demo command.
-- [x] Run `npm test`, `npm run build`, `npm run demo`, `git diff --check`.
+- [x] Run `npm test`, `npm run build`, `li-saves demo`, `git diff --check`.
 
 
 ## Verification evidence
 
-- `npm test` => 10 files passed, 17 tests passed.
+- `npm test` => 11 files passed, 20 tests passed.
 - `npm run build` => TypeScript build passed.
-- `npm run demo` => generated 2 raw saves and 2 ideas into `.demo/demo-output.json`.
-- `npm run dev -- --env .env sync --dry-run --export-path fixtures/linkedin-export/saved-items.csv --limit 2` => parsed export and printed dry-run sync summary.
-- `npm run dev -- --env .env setup:notion-schema` => printed Raw Ingest + Content Ideas schema.
-- `npm run doctor` => local setup check runs and reports env presence.
+- `zsh scripts/install_cli.zsh` => linked aliases into `~/.local/bin`.
+- `li-saves demo` => generated 2 raw saves and 2 ideas into `.demo/demo-output.json`.
+- `li-saves --env .env sync --dry-run --export-path fixtures/linkedin-export/saved-items.csv --limit 2` => parsed export and printed dry-run sync summary.
+- `li-saves --env .env setup:notion-schema` => printed Raw Ingest + Content Ideas schema.
+- `li-saves doctor` => local setup check runs and reports env presence.
 
 ## Known live-run prerequisites
 

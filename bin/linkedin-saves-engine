@@ -1,0 +1,20 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+script_path=${0:A}
+repo_dir=${script_path:h:h}
+source_cli="$repo_dir/src/cli.ts"
+built_cli="$repo_dir/dist/src/cli.js"
+tsx_bin="$repo_dir/node_modules/.bin/tsx"
+
+if [[ -x "$tsx_bin" && -f "$source_cli" && -z "${LINKEDIN_SAVES_ENGINE_USE_DIST:-}" ]]; then
+  exec "$tsx_bin" "$source_cli" "$@"
+fi
+
+if [[ -f "$built_cli" ]]; then
+  exec node "$built_cli" "$@"
+fi
+
+print -u2 -r -- "linkedin-saves-engine cannot start: missing local tsx and built CLI."
+print -u2 -r -- "Run: npm install && npm run build"
+exit 1
