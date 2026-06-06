@@ -30,4 +30,26 @@ describe('idea generator', () => {
     expect(ideas[0].sourceEvidence[0]).toContain('AI agents');
     expect(ideas[0].fitScore).toBeGreaterThanOrEqual(70);
   });
+
+  it('does not generate generic ideas for metadata-only URL records with no evidence', async () => {
+    const profile = await loadBrandProfileFromMarkdown('brand-voices/amit-tiwari-site.md');
+    const rawSave = RawSaveSchema.parse({
+      sourcePlatform: 'linkedin',
+      sourceAdapter: 'linkedin-export-v1',
+      dedupKey: 'linkedin:urn:li:activity:777',
+      originalUrl: 'https://www.linkedin.com/feed/update/urn:li:activity:777/',
+      canonicalUrl: 'https://www.linkedin.com/feed/update/urn:li:activity:777/',
+      captureMethod: 'export',
+      captureCompleteness: 'metadata_only',
+      visibilityState: 'available',
+      storagePolicy: 'summary_and_snippets',
+      processingPriority: 'normal',
+      firstIngestedAt: '2026-06-06T00:00:00.000Z',
+      lastSeenAt: '2026-06-06T00:00:00.000Z',
+      title: 'LinkedIn saved item',
+      evidenceSnippets: []
+    });
+    expect(generateIdeasForSave(rawSave, profile, { surfaceId: 'website_article' })).toEqual([]);
+  });
+
 });

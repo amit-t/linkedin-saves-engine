@@ -36,11 +36,13 @@ function scoreFit(rawSave: RawSave, profile: BrandProfile): number {
 
 export function generateIdeasForSave(rawSave: RawSave, profile: BrandProfile, options: GenerateIdeaOptions): ContentIdea[] {
   if (rawSave.processingPriority === 'ignored' || rawSave.captureCompleteness === 'failed') return [];
+  const hasUsableEvidence = Boolean(rawSave.sourceSummary || rawSave.excerpt || rawSave.textSnapshot || rawSave.evidenceSnippets.length > 0);
+  if (!hasUsableEvidence) return [];
   const createdAt = options.now ?? new Date().toISOString();
   const sourceTitle = titleFrom(rawSave);
   const evidence = rawSave.evidenceSnippets.length > 0
     ? rawSave.evidenceSnippets
-    : [rawSave.sourceSummary ?? rawSave.excerpt ?? sourceTitle];
+    : [rawSave.sourceSummary ?? rawSave.excerpt ?? rawSave.textSnapshot ?? sourceTitle];
   const fitScore = scoreFit(rawSave, profile);
   if (fitScore < 60) return [];
   const surface = profile.surfaces.find((item) => item.id === options.surfaceId) ?? profile.surfaces[0];

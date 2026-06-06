@@ -1,0 +1,45 @@
+# Demo
+
+This demo proves the local pipeline without touching LinkedIn or Notion.
+
+## Command
+
+```bash
+npm run demo
+```
+
+## What it does
+
+1. Reads `fixtures/linkedin-export/saved-items.csv`.
+2. Parses rows into normalized LinkedIn `RawSave` records.
+3. Enriches the synthetic saves with summary/evidence/topics.
+4. Loads `brand-voices/amit-tiwari-site.md`.
+5. Generates website article ideas using the brand profile.
+6. Writes `.demo/demo-output.json`.
+
+## Verified output from 2026-06-06 run
+
+```json
+{
+  "rawSaves": 2,
+  "ideas": 2,
+  "outPath": ".demo/demo-output.json"
+}
+```
+
+## Why this matters
+
+The demo covers the PRD path that can be verified without Amit's live LinkedIn session or Notion token:
+
+```text
+LinkedIn export fixture
+  -> RawSave normalization
+  -> brand profile load
+  -> content idea generation
+  -> JSON artifact
+```
+
+Live verification needs:
+
+- LinkedIn login in a local headed browser profile.
+- Notion integration token and parent page/database IDs.

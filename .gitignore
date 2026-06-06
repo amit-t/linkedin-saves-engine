@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.demo/
+.env
+.env.*
+!.env.example
+.local/
+.cache/
+.browser-profiles/
+.playwright/
+*.har
+*.trace.zip
+*.log
+.DS_Store
