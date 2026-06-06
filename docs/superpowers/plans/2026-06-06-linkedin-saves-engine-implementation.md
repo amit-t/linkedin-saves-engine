@@ -1,6 +1,6 @@
 # LinkedIn Saves Engine Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the PRD v3 into a working local-first LinkedIn saves engine with dry-run/demo flow, Notion DB setup/upsert support, brand voice profiles, and verified tests.
 
@@ -26,49 +26,63 @@
 
 ## Task 1: Tooling and failing tests
 
-- [ ] Create Node/TypeScript project config and Vitest test files that import non-existent modules.
-- [ ] Run `npm test` and verify tests fail because modules are missing.
+- [x] Create Node/TypeScript project config and Vitest test files that import non-existent modules.
+- [x] Run `npm test` and verify tests fail because modules are missing.
 
 ## Task 2: Core model, URL, dedupe, redaction
 
-- [ ] Implement `RawSave` schema and helpers.
-- [ ] Implement canonical URL cleanup.
-- [ ] Implement dedupe key selection.
-- [ ] Implement redaction for logs/errors/metadata.
-- [ ] Run tests to green.
+- [x] Implement `RawSave` schema and helpers.
+- [x] Implement canonical URL cleanup.
+- [x] Implement dedupe key selection.
+- [x] Implement redaction for logs/errors/metadata.
+- [x] Run tests to green.
 
 ## Task 3: LinkedIn export importer
 
-- [ ] Implement CSV parser for LinkedIn `Saved Items` export with flexible headers.
-- [ ] Convert rows into metadata-only RawSave records.
-- [ ] Merge export records with richer browser records without overwriting rich data.
-- [ ] Run tests to green.
+- [x] Implement CSV parser for LinkedIn `Saved Items` export with flexible headers.
+- [x] Convert rows into metadata-only RawSave records.
+- [x] Merge export records with richer browser records without overwriting rich data.
+- [x] Run tests to green.
 
 ## Task 4: Brand profiles and ideas
 
-- [ ] Parse brand voice Markdown profiles into structured profile objects.
-- [ ] Validate required profile sections.
-- [ ] Generate deterministic Content Ideas from RawSave + brand profile + surface.
-- [ ] Run tests to green.
+- [x] Parse brand voice Markdown profiles into structured profile objects.
+- [x] Validate required profile sections.
+- [x] Generate deterministic Content Ideas from RawSave + brand profile + surface.
+- [x] Run tests to green.
 
 ## Task 5: Notion schema and upsert planning
 
-- [ ] Define Raw Ingest and Content Ideas schema specs.
-- [ ] Implement `setup:notion-schema` to print instructions in dry-run mode and create DBs when `--write` + token are supplied.
-- [ ] Implement dry-run upsert planner and Notion page property mapping.
-- [ ] Run tests to green.
+- [x] Define Raw Ingest and Content Ideas schema specs.
+- [x] Implement `setup:notion-schema` to print instructions in dry-run mode and create DBs when `--write` + token are supplied.
+- [x] Implement dry-run upsert planner and Notion page property mapping.
+- [x] Run tests to green.
 
 ## Task 6: Browser capture skeleton
 
-- [ ] Implement Playwright headed persistent-profile launcher.
-- [ ] Add DOM fallback extraction and network response collection hooks.
-- [ ] Enforce write-method guard and stop-condition errors.
-- [ ] Keep live capture manual/local and excluded from automated tests.
+- [x] Implement Playwright headed persistent-profile launcher.
+- [x] Add DOM fallback extraction and network response collection hooks.
+- [x] Enforce write-method guard and stop-condition errors.
+- [x] Keep live capture manual/local and excluded from automated tests.
 
 ## Task 7: CLI, docs, demo
 
-- [ ] Add commands: `doctor`, `setup:notion-schema`, `import:linkedin-export`, `profile:brand:validate`, `generate:ideas`, `demo`.
-- [ ] Add synthetic fixtures for demo.
-- [ ] Write `docs/SETUP.md` with exact Notion DB setup and browser setup instructions.
-- [ ] Write `docs/DEMO.md` and run demo command.
-- [ ] Run `npm test`, `npm run build`, `npm run demo`, `git diff --check`.
+- [x] Add commands: `doctor`, `setup:notion-schema`, `import:linkedin-export`, `profile:brand:validate`, `generate:ideas`, `demo`.
+- [x] Add synthetic fixtures for demo.
+- [x] Write `docs/SETUP.md` with exact Notion DB setup and browser setup instructions.
+- [x] Write `docs/DEMO.md` and run demo command.
+- [x] Run `npm test`, `npm run build`, `npm run demo`, `git diff --check`.
+
+
+## Verification evidence
+
+- `npm test` => 9 files passed, 14 tests passed.
+- `npm run build` => TypeScript build passed.
+- `npm run demo` => generated 2 raw saves and 2 ideas into `.demo/demo-output.json`.
+- `npm run dev -- setup:notion-schema` => printed Raw Ingest + Content Ideas schema.
+- `npm run doctor` => local setup check runs and reports env presence.
+
+## Known live-run prerequisites
+
+- Real Notion DB creation requires `NOTION_TOKEN` and `NOTION_PARENT_PAGE_ID`.
+- Real LinkedIn capture requires manual login in the headed local browser profile.
