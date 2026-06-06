@@ -1,6 +1,6 @@
 # LinkedIn Saves Engine — Deep Grill Me Auto
 
-Status: PRD v2 defaults applied
+Status: PRD v3 brand-profile defaults applied
 Mode: deep / auto-filled / resolved
 Source PRD: `docs/PRD.md`
 Generated: 2026-06-06
@@ -16,9 +16,9 @@ Working premise from Amit:
 - Optimize capture completeness and content usefulness first.
 - Platform risk is acceptable for a personal local project using Amit's own logged-in session/token.
 - This is not a SaaS v1 and not an open-source-first product.
-- Source capture is generic: LinkedIn saves now, Substack sibling project next, future sources later.
+- Source capture in this repo is LinkedIn-only.
 - Raw source data lands in a Notion Raw Ingest database, then feeds a separate Content Ideas layer.
-- Saves can fan out to multiple destinations: Amit Tiwari site, Tiny Trauma site, LinkedIn posts, Substack essays/newsletters, and future surfaces.
+- Saves can fan out to any configured site/brand/surface through reusable brand voice profiles. No destination brand is hard-coded into the LinkedIn adapter.
 
 Reference facts checked for this grill:
 
@@ -48,10 +48,10 @@ local authenticated browser capture
   -> Notion Raw Ingest
   -> enrichment/classification
   -> separate Content Ideas database
-  -> destination-specific command packs
+  -> generic command packs using brand profile + surface
 ```
 
-These fixes have been applied to `docs/PRD.md` in PRD v2:
+These fixes have been applied to `docs/PRD.md` in PRD v3:
 
 1. Platform risk accepted but bounded: personal/local/read-only/low-rate/no credential leakage/no account-security bypass.
 2. Notion split into two databases from day one: Raw Ingest and Content Ideas.
@@ -61,14 +61,15 @@ These fixes have been applied to `docs/PRD.md` in PRD v2:
 6. LinkedIn export is a first-class reconciliation command.
 7. Quality gates and fixture matrix are required before real Notion writes.
 8. Destination/brand logic stays outside LinkedIn adapter.
+9. Reusable brand voice template + `brand-voice-profiler` skill added; `amit-tiwari-site` seeded from existing content corpus.
 
 ## 2. Product boundary grill
 
 ### Q1. Is this repo a LinkedIn-only adapter or the whole generic saves platform?
 
-Recommended answer: LinkedIn-specific adapter plus enough local orchestration to prove the generic contract. Do not build a multi-source monolith here. Keep canonical model and Notion mappings in repo-local code first; extract a shared package only after Substack reaches parity.
+Recommended answer: LinkedIn-specific adapter plus enough local orchestration to prove the generic contract. Do not build a multi-source monolith here. Keep canonical model, Notion mappings, and brand-profile mechanics repo-local first; extract shared packages only after another source/brand proves the abstraction.
 
-Rationale: Premature shared-core extraction creates abstraction debt. But source capture must still output a generic `RawSave` contract so Substack can align.
+Rationale: Premature shared-core extraction creates abstraction debt. Source capture must still output a generic `RawSave` contract so future engines can align.
 
 PRD amendment: Add “this repo may temporarily contain shared contracts, but source-specific code must remain isolated under a LinkedIn adapter boundary.”
 
@@ -98,11 +99,11 @@ Recommended answer: Yes. Create metadata-only tombstone records when export/brow
 
 Rationale: The absence is useful: it prevents rework, explains gaps, and supports audit.
 
-### Q6. Should Tiny Trauma logic appear anywhere in LinkedIn capture?
+### Q6. Should any site/brand logic appear anywhere in LinkedIn capture?
 
-Recommended answer: No. Tiny Trauma can be a destination profile in fanout config. It must not affect capture, raw schema, dedupe, or enrichment.
+Recommended answer: No. Sites/brands are represented only as brand voice profiles used by enrichment, scoring, ideation, and drafting. They must not affect capture, raw schema, dedupe, export import, or RawSave normalization.
 
-Rationale: User wants generic saves engine. Source adapters should not know brand destinations.
+Rationale: User wants a LinkedIn source engine that can serve any configured site/brand.
 
 ## 3. Platform/API reality grill
 
@@ -323,7 +324,7 @@ Rationale: Content quality needs access to text; privacy/copyright risk argues a
 
 ### Q37. Should Raw Ingest include brand fit columns?
 
-Recommended answer: Yes, but as generic scores/labels produced after classification, not capture-time source fields. Example: `Destination Candidates`, `Brand Fit Amit`, `Brand Fit Tiny Trauma`.
+Recommended answer: Yes, but as generic scores/labels produced after classification, not capture-time source fields. Example: `Brand Profile Candidates`, `Top Brand Fit Score`, and `Brand Fit Scores`.
 
 Rationale: Helpful for views and triage, but should not pollute adapter logic.
 
@@ -353,16 +354,11 @@ Recommended answer: No. Capture and idea generation are separate pipeline stages
 
 Rationale: Source capture should be robust and idempotent; model calls can be slower/noisier.
 
-### Q42. What destinations should be configured first?
+### Q42. How should destinations be configured first?
 
-Recommended answer:
+Recommended answer: Do not hard-code destination brands in the engine. Add a reusable brand voice/content rules template and a `brand-voice-profiler` skill that can infer a profile from sample content. Seed only one first-cut profile now: `amit-tiwari-site`, from `/Users/amittiwari/Projects/AmitTiwari/amittiwari-me-content-writer`.
 
-1. Amit Tiwari site article/essay.
-2. LinkedIn post.
-3. Substack essay/newsletter.
-4. Tiny Trauma article.
-
-Rationale: User named all; order prioritizes personal generic brand and LinkedIn-native reuse, while still supporting Tiny Trauma.
+Rationale: The engine only cares about LinkedIn as a source. Any site/brand should be added by profile, not by code.
 
 ### Q43. Should destination commands auto-publish?
 
@@ -392,7 +388,7 @@ Rationale: Avoids plagiarism/copyright problems and improves originality.
 
 Recommended answer: Yes, as context. It should not assume LinkedIn destination just because source is LinkedIn.
 
-Rationale: A LinkedIn save can become Substack essay or site article.
+Rationale: A LinkedIn save can become content for any configured profile/surface; the source platform does not determine the destination.
 
 ## 9. Risk and safety grill
 
@@ -450,11 +446,14 @@ capture:linkedin-saves --dry-run
 capture:linkedin-saves --write
 import:linkedin-export --path <archive>
 enrich:raw-saves --dry-run
-generate:ideas --dry-run
-generate:linkedin-post
-generate:substack-essay
-generate:amit-site-article
-generate:tiny-trauma-article
+profile:brand:new --brand <brand-id>
+profile:brand:seed --brand <brand-id> --samples <path...>
+profile:brand:validate --brand <brand-id>
+generate:ideas --brand <brand-id> --surface <surface-id> --dry-run
+generate:content-brief --brand <brand-id> --surface <surface-id>
+generate:draft --brand <brand-id> --surface <surface-id>
+generate:idea-clusters --brand <brand-id>
+generate:weekly-digest --brand <brand-id>
 doctor
 clear-cache
 ```
@@ -598,7 +597,7 @@ Rationale: Prevents drift.
 
 ### Q70. Should generic schema live in separate package now?
 
-Recommended answer: No. Keep it local until Substack implementation proves the second adapter. Then extract.
+Recommended answer: No. Keep it local until a second source or brand-profile use case proves the shared abstraction. Then extract.
 
 Rationale: Two real adapters reveal the right abstraction.
 
@@ -665,28 +664,28 @@ These amendments have been folded into `docs/PRD.md` PRD v2:
 | Stealth | No | Avoid bypass behavior. |
 | Write guard | Fail closed | Prevent accidental mutation. |
 | CI live LinkedIn tests | No | Avoid flakiness/risk. |
-| Shared package | Defer until Substack parity | Real abstraction after two adapters. |
+| Shared package | Defer until second source/brand proves abstraction | Real abstraction after repeated use. |
 
 ## 16. Open questions that actually need Amit
 
-Only one question remains important enough to keep open. Everything else has a recommended default and has been applied to `docs/PRD.md`.
-
-### O1. What are the exact brand/voice rules for each destination?
-
-Recommended default now applied: create starter profiles for Amit Tiwari site, LinkedIn post, Substack essay/newsletter, and Tiny Trauma article.
-
-Why this remains open: precise voice, audience, forbidden angles, preferred formats, and examples are owner/editorial decisions. The engine can start with generic profiles, but high-quality content will improve once Amit approves or supplies brand-specific examples.
+No blocking open questions remain. Everything has a recommended default and has been applied to `docs/PRD.md`.
 
 Resolved defaults:
 
+- Source scope: this project is LinkedIn-only for capture.
+- Destination scope: generic brand profiles for any site/brand/surface.
+- Brand voice: template added at `brand-voices/brand-voice-template.md`.
+- Brand profiler skill: added at `skills/brand-voice-profiler/` and installed globally at `~/.agents/skills/brand-voice-profiler`.
+- First seeded profile: `brand-voices/amit-tiwari-site.md`, inferred from `amittiwari-me-content-writer`.
+- Tiny Trauma: explicitly not part of this project; use the template/skill later in a separate fork/project.
 - Notion parent/page: create private workspace-level databases unless config provides a parent.
 - Full-text policy: local full snapshots, Notion summary/snippets only.
 - First run strategy: `--limit 50` for quick value, then full backfill/export reconciliation.
-- Shared package: defer until Substack parity.
+- Shared package: defer until a second source/brand proves abstraction.
 
 ## 17. Final recommendation
 
-Proceed to implementation after updating the PRD with section 14 amendments. Build in this order:
+Proceed to implementation from `docs/PRD.md` PRD v3. Build in this order:
 
 1. Notion schema/bootstrap/validation.
 2. Core `RawSave`, dedupe, canonicalization, redaction, run-state.
@@ -695,7 +694,7 @@ Proceed to implementation after updating the PRD with section 14 amendments. Bui
 5. Network parser + DOM fallback fixtures.
 6. Notion idempotent upsert.
 7. Enrichment + scoring.
-8. Content Ideas generation and destination command packs.
+8. Content Ideas generation using brand profiles and generic command packs.
 9. Safety hardening and docs.
 
 Do not start with model-based idea generation. Start with capture correctness, redaction, dedupe, and Notion integrity. Idea generation becomes valuable only when raw evidence is trustworthy.

@@ -1,6 +1,6 @@
 # LinkedIn Saves Engine PRD
 
-Status: PRD v2 — grill-reviewed defaults applied
+Status: PRD v3 — brand-profile defaults applied
 Owner: Amit Tiwari
 Repo: `linkedin-saves-engine`
 Last updated: 2026-06-06
@@ -8,9 +8,9 @@ Related review: `docs/PRD_GRILL_ME_AUTO.md`
 
 ## 1. Product summary
 
-LinkedIn Saves Engine turns Amit's saved LinkedIn posts/articles into a reliable local-first raw-ingest system in Notion, then enriches and classifies those saves into reusable content ideas for multiple brands and publishing surfaces.
+LinkedIn Saves Engine turns saved LinkedIn posts/articles into a reliable local-first raw-ingest system in Notion, then enriches and classifies those saves into reusable content ideas for any configured site, brand, or publishing surface.
 
-This repo owns the LinkedIn source adapter and the first working proof of the generic saves-engine contract. It may temporarily contain shared contracts, Notion schema, enrichment, and command-pack code, but LinkedIn-specific capture must stay isolated behind an adapter boundary so the sibling Substack engine and future source engines can align without inheriting LinkedIn assumptions.
+This repo owns the LinkedIn source adapter and the first working proof of the generic saves-engine contract. It may temporarily contain shared contracts, Notion schema, enrichment, brand-profile, and command-pack code, but LinkedIn-specific capture must stay isolated behind an adapter boundary. Destination/site/brand logic must live in reusable brand profiles, not in the LinkedIn adapter.
 
 Core flow:
 
@@ -24,7 +24,7 @@ LinkedIn saved items
   -> Notion Raw Ingest database
   -> enrichment + classification
   -> Notion Content Ideas database
-  -> command packs for Amit Tiwari site, LinkedIn posts, Substack essays, Tiny Trauma, etc.
+  -> command packs for any configured brand/site/surface
 ```
 
 Primary product outcome is not merely archiving saves. Primary outcome is a trustworthy source-evidence pipeline that produces specific, reviewable, destination-aware content ideas.
@@ -42,14 +42,15 @@ The deep grill review resolved all simple choices into defaults:
 | LinkedIn export | First-class reconciliation/import command, not optional afterthought |
 | Notion model | Two related databases: Raw Ingest + Content Ideas |
 | Full-text storage | Summary/snippets in Notion; full local snapshot cache, gitignored/encrypted-capable |
-| Destination logic | Config-driven and outside LinkedIn adapter |
+| Destination logic | Config-driven brand profiles outside LinkedIn adapter |
 | Idea fanout | Zero-to-many ideas per raw save |
 | Auto-publish | No; commands generate briefs/drafts only |
 | Dry-run | Default for every write path |
 | Platform-risk posture | Accepted for personal local use; bounded by read-only, low-rate, no bypass, no secret leakage |
 | Stealth/evasion | No stealth tooling; stop on security challenges |
 | Live CI tests | No live LinkedIn tests in CI |
-| Shared package extraction | Defer until Substack parity proves abstractions |
+| Brand voice | Reusable template + brand-profiler skill; seed `amit-tiwari-site` from existing content corpus |
+| Shared package extraction | Defer until a second source/brand proves abstractions |
 
 ## 3. Problem
 
@@ -57,7 +58,7 @@ LinkedIn saved posts are high-intent signals: Amit saved them because they conta
 
 Manual copy/paste loses context and does not scale. Official LinkedIn APIs do not provide a first-class saved-posts endpoint. LinkedIn account export includes saved-item URLs and saved dates, but not enough content for idea generation. Browser/session capture provides the best completeness for a personal local workflow.
 
-The product must convert a messy personal saved queue into structured evidence and then into useful content ideas across multiple destinations. One LinkedIn save might become an Amit Tiwari site essay, Tiny Trauma article, LinkedIn post, Substack newsletter section, or only a cluster input for future synthesis.
+The product must convert a messy personal saved queue into structured evidence and then into useful content ideas across any configured destination. One LinkedIn save might become an Amit Tiwari site essay today, then later feed another site/brand when that brand profile exists. The source engine does not know or care which brand eventually uses the idea.
 
 ## 4. Goals
 
@@ -68,7 +69,7 @@ The product must convert a messy personal saved queue into structured evidence a
 5. Enrich saves with useful metadata: author, title, post text, article title, media hints, source URL, canonical URL, saved time, publish time when available, content hash, root/repost identity when available, and visibility state.
 6. Classify saves into topics, entities, content angles, novelty, actionability, destination candidates, and brand fit.
 7. Generate zero-to-many Content Idea records from each strong save.
-8. Support multiple downstream destinations without hard-coding Tiny Trauma: Amit Tiwari site, Tiny Trauma site, LinkedIn post, Substack essay/newsletter, future channels.
+8. Support multiple downstream destinations through user-provided brand profiles and surface templates, without hard-coding any brand/site into the LinkedIn adapter.
 9. Keep browser credentials, session tokens, raw sensitive payloads, traces, and snapshots local and out of git, logs, Notion, and cloud storage by default.
 10. Make runs idempotent, resumable, auditable, low-rate, dry-run capable, and safe-by-default.
 
@@ -81,7 +82,7 @@ The product must convert a messy personal saved queue into structured evidence a
 - Do not use stealth/evasion tooling.
 - Do not store cookies, auth headers, CSRF tokens, bearer tokens, raw browser storage, HAR files, or full request/response headers in Notion, git, committed fixtures, normal logs, or cloud storage.
 - Do not run live LinkedIn automation in CI.
-- Do not make the LinkedIn repo a permanent all-source monolith if a shared package/repo becomes justified after Substack parity.
+- Do not make the LinkedIn repo a permanent all-source monolith if a shared package/repo becomes justified after another source or brand-profile use case proves the abstraction.
 - Do not auto-publish generated content.
 - Do not blindly copy substantial third-party source text into publishable drafts.
 
@@ -91,7 +92,7 @@ The product must convert a messy personal saved queue into structured evidence a
 
 - Saves content on LinkedIn while browsing normally.
 - Wants saved items to become searchable, structured, and useful for content ideation.
-- Wants flexible routing: one LinkedIn save can inspire an Amit Tiwari article, Tiny Trauma essay, LinkedIn post, or Substack essay.
+- Wants flexible routing: one LinkedIn save can inspire content for any configured brand/site/surface.
 - Accepts platform risk for personal local use with a logged-in session, but still needs credential hygiene.
 - Wants high content quality over perfect platform-compliance comfort.
 
@@ -99,7 +100,7 @@ The product must convert a messy personal saved queue into structured evidence a
 
 - Runs locally against their own logged-in browser/session.
 - Owns their own platform risk and credentials.
-- Configures their own Notion database and destination brands.
+- Configures their own Notion database and brand profiles.
 - Must not receive Amit-specific schema, prompts, saves, screenshots, fixtures, cookies, or content snapshots.
 
 ### Future optional user: content operator
@@ -249,7 +250,7 @@ Risk boundaries:
 
 ### 11.7 Commands / downstream surfaces
 
-The engine exposes command packs, not one fixed output:
+The engine exposes generic command packs, not one fixed output and not hard-coded brand commands:
 
 ```text
 setup:notion-schema
@@ -257,28 +258,25 @@ capture:linkedin-saves --dry-run
 capture:linkedin-saves --write
 import:linkedin-export --path <archive-or-csv>
 enrich:raw-saves --dry-run
-generate:ideas --dry-run
-generate:linkedin-post
-generate:substack-essay
-generate:amit-site-article
-generate:tiny-trauma-article
-generate:content-brief
-generate:idea-clusters
-generate:weekly-digest
+profile:brand:new --brand <brand-id>
+profile:brand:seed --brand <brand-id> --samples <path...>
+profile:brand:validate --brand <brand-id>
+generate:ideas --brand <brand-id> --surface <surface-id> --dry-run
+generate:content-brief --brand <brand-id> --surface <surface-id>
+generate:draft --brand <brand-id> --surface <surface-id>
+generate:idea-clusters --brand <brand-id>
+generate:weekly-digest --brand <brand-id>
 doctor
 clear-cache
 ```
 
-Commands should read Raw Ingest + Content Ideas and produce briefs/drafts. They must not auto-publish in v1.
+Commands should read Raw Ingest + Content Ideas + Brand Voice profiles and produce briefs/drafts. They must not auto-publish in v1.
 
-Initial destination profiles:
+First seeded brand profile:
 
-1. Amit Tiwari site article/essay.
-2. LinkedIn post.
-3. Substack essay/newsletter.
-4. Tiny Trauma article.
+- `brand-voices/amit-tiwari-site.md`, seeded from `/Users/amittiwari/Projects/AmitTiwari/amittiwari-me-content-writer`.
 
-Starter voice profiles can be generic; Amit can refine them later.
+Other brands/sites are created later by filling `brand-voices/brand-voice-template.md` manually or by running the reusable `brand-voice-profiler` skill on sample content.
 
 ## 12. Non-functional requirements
 
@@ -291,7 +289,7 @@ Starter voice profiles can be generic; Amit can refine them later.
 - **Low load**: one browser context, small concurrency, jitter, backoff, stop on throttling/challenge.
 - **Auditability**: clear local run logs with counts and hashes, no secrets.
 - **Testability**: adapter contract tests from sanitized/synthetic fixtures.
-- **Portability**: schema and canonical model should also work for Substack and future saves engines.
+- **Portability**: schema and canonical model should also work for future saves engines.
 - **No live CI against LinkedIn**: live smoke tests are manual/local only.
 
 ## 13. Storage policy
@@ -357,6 +355,7 @@ type RawSave = {
   topics?: string[];
   entities?: string[];
   destinationCandidates?: string[];
+  brandProfileCandidates?: string[];
   brandFit?: Record<string, number>;
   ideaPotentialScore?: number;
   noveltyScore?: number;
@@ -394,7 +393,7 @@ Rules:
 | Property | Type | Purpose |
 |---|---|---|
 | `Name` | Title | Best title or post excerpt fallback |
-| `Source Platform` | Select | `LinkedIn`, `Substack`, future sources |
+| `Source Platform` | Select | `LinkedIn`, future sources |
 | `Source Adapter` | Rich text | Adapter and version |
 | `Source Item ID` | Rich text | URN/activity/share/article ID when available |
 | `Root Item ID` | Rich text | Root post/article ID for reposts/shares |
@@ -426,9 +425,10 @@ Rules:
 | `Hashtags` | Multi-select | Hashtags when present |
 | `Topics` | Multi-select | Inferred topics |
 | `Entities` | Multi-select/Rich text | People/companies/products/concepts |
-| `Destination Candidates` | Multi-select | `Amit Site`, `Tiny Trauma`, `LinkedIn`, `Substack`, etc. |
-| `Brand Fit Amit` | Number | 0–100 fit score |
-| `Brand Fit Tiny Trauma` | Number | 0–100 fit score |
+| `Destination Candidates` | Multi-select | Surface candidates such as `website_article`, `linkedin_post`, `newsletter_note` |
+| `Brand Profile Candidates` | Multi-select/Rich text | Candidate brand profile IDs, e.g. `amit-tiwari-site` |
+| `Top Brand Fit Score` | Number | Best 0–100 fit score across configured brand profiles |
+| `Brand Fit Scores` | Rich text | Safe compact map of brand profile ID to score |
 | `Idea Potential Score` | Number | 0–100 |
 | `Novelty Score` | Number | 0–100 |
 | `Actionability Score` | Number | 0–100 |
@@ -461,8 +461,10 @@ A raw save is source evidence, not a final idea. One save may fan out into multi
 | `Name` | Title | Idea headline/title |
 | `Primary Raw Save` | Relation | Main source raw record |
 | `Source Saves` | Relation | Optional supporting saves for clusters |
-| `Destination Brand` | Select | `Amit Tiwari`, `Tiny Trauma`, future brands |
-| `Destination Channel` | Select | `website`, `LinkedIn`, `Substack`, `newsletter`, `shortform`, future channels |
+| `Brand Profile ID` | Select/Rich text | Configured profile ID, e.g. `amit-tiwari-site` |
+| `Brand Name` | Rich text | Human-readable brand/site name |
+| `Surface ID` | Select | `website_article`, `linkedin_post`, `newsletter_note`, `essay`, future surfaces |
+| `Brand Voice Version` | Rich text | Version/date/hash of brand profile used |
 | `Format` | Select | `essay`, `post`, `thread`, `carousel`, `newsletter section`, `research note`, `script` |
 | `Audience` | Rich text/Select | Intended reader |
 | `Hook` | Rich text | Opening angle |
@@ -488,6 +490,25 @@ Quality bar for generated ideas:
 - why-now/why-this-matters angle
 - fit/confidence scores
 - traceable raw-save relation
+
+### 17.1 Brand voice profiles
+
+Brand profiles are reusable content rules that make this LinkedIn source engine useful for any site/brand without embedding brand logic in capture code. A profile defines audience, point of view, voice, topic boundaries, surface templates, selection rules, and quality checks.
+
+Project artifacts:
+
+- `brand-voices/brand-voice-template.md` — user-fillable template.
+- `brand-voices/amit-tiwari-site.md` — seeded v1 profile from Amit's existing content corpus.
+- `skills/brand-voice-profiler/` — reusable agent skill for generating a brand profile from sample content. Also installed globally at `~/.agents/skills/brand-voice-profiler` for reuse in future projects.
+
+Rules:
+
+- Brand profiles affect enrichment, scoring, idea generation, and drafting only.
+- LinkedIn capture, dedupe, export import, and RawSave normalization cannot depend on brand profiles.
+- Multiple brand profiles can be active in one run.
+- A raw save can be high-fit for zero, one, or many brand profiles.
+- A brand profile should cite its sample paths and avoid copying long source passages.
+- Generated Content Ideas must store the `Brand Profile ID` and `Brand Voice Version` used.
 
 ## 18. Architecture
 
@@ -686,12 +707,12 @@ Fixture safety:
 
 ### 22.4 Enrichment and fanout
 
-- Enriched records get summary, evidence snippets, inferred tags, quality/novelty/actionability scores, and destination candidates.
-- High-signal saves can generate multiple destination idea candidates.
+- Enriched records get summary, evidence snippets, inferred tags, quality/novelty/actionability scores, brand-profile candidates, and surface candidates.
+- High-signal saves can generate multiple destination idea candidates for any configured brand profile.
 - Weak saves can generate zero ideas.
 - Ideas are linked back to raw saves.
-- Destination brand/channel definitions are config-driven.
-- No Tiny Trauma-specific logic exists in LinkedIn capture.
+- Brand voice and surface definitions are config-driven.
+- No site/brand-specific logic exists in LinkedIn capture.
 
 ### 22.5 Safety
 
@@ -706,7 +727,8 @@ Fixture safety:
 
 ### Milestone 1: Docs, contracts, and schema
 
-- PRD v2 accepted.
+- PRD v3 accepted.
+- Brand voice template, brand-profiler skill, and `amit-tiwari-site` seed profile exist.
 - Create code-level `RawSave` schema/runtime validation.
 - Create Notion schema config for Raw Ingest + Content Ideas.
 - Add `.gitignore` for local credentials/caches/profiles/snapshots/traces.
@@ -740,7 +762,7 @@ Fixture safety:
 - Summary/snippets/local snapshot policy.
 - Topic/entity/destination scoring.
 - Content Ideas fanout.
-- Command packs for Amit site, LinkedIn, Substack, Tiny Trauma.
+- Generic command packs using brand profile ID + surface ID.
 
 ### Milestone 6: Hardening and docs
 
@@ -769,16 +791,18 @@ Fixture safety:
 
 ## 25. Open questions requiring Amit
 
-Only one question remains important enough to block high-quality content defaults:
+No blocking open questions remain for the PRD.
 
-1. **Exact brand/voice rules for each destination.** Starter profiles will be created for Amit Tiwari site, LinkedIn, Substack, and Tiny Trauma, but Amit should later approve/refine voice, audience, forbidden angles, preferred formats, and examples for each.
+Resolved defaults:
 
-Everything else has a default:
-
+- Brand model: generic brand voice template + reusable `brand-voice-profiler` skill.
+- First seeded profile: `brand-voices/amit-tiwari-site.md`, inferred from `amittiwari-me-content-writer`.
+- Other brands/sites: create later by filling `brand-voices/brand-voice-template.md` or running the brand-profiler skill on samples.
+- Tiny Trauma: not included in this project; it can use the same template/skill in a future fork/project.
 - Notion parent: create private workspace-level databases unless config provides a parent.
 - Full-text storage: local full snapshot cache, Notion summary/snippets only.
 - First run: `--limit 50` for quick value, then full backfill/reconciliation.
-- Shared package: defer until Substack parity.
+- Shared package: defer until a second source/brand proves abstractions.
 
 ## 26. First implementation sequence
 
@@ -792,7 +816,7 @@ Build in this order:
 6. Network parser + DOM fallback + fixture tests.
 7. Notion idempotent upsert.
 8. Enrichment, scoring, local snapshot policy.
-9. Content Ideas generation and destination command packs.
+9. Content Ideas generation using brand profiles and generic destination command packs.
 10. Safety hardening, docs, manual smoke test, secret scan.
 
 Do not start with model-based idea generation. Start with capture correctness, redaction, dedupe, and Notion integrity. Idea generation becomes valuable only when raw evidence is trustworthy.
