@@ -1,7 +1,7 @@
 # LinkedIn Saves Engine — Deep Grill Me Auto
 
-Status: Draft v1 review
-Mode: deep / auto-filled
+Status: PRD v2 defaults applied
+Mode: deep / auto-filled / resolved
 Source PRD: `docs/PRD.md`
 Generated: 2026-06-06
 Owner: Amit Tiwari
@@ -51,16 +51,16 @@ local authenticated browser capture
   -> destination-specific command packs
 ```
 
-Main fixes before implementation:
+These fixes have been applied to `docs/PRD.md` in PRD v2:
 
-1. Make “platform risk accepted” explicit but bounded: personal/local/read-only/low-rate/no credential leakage/no account-security bypass.
-2. Split Notion into two databases from day one: Raw Ingest and Content Ideas.
-3. Default full-text policy should be `summary_and_snippets_in_notion + local_full_snapshot_cache`, not full text in Notion.
-4. Add a dedicated persistent browser profile instead of attaching to Amit's daily browser by default.
-5. Define hard stop conditions: login challenge, CAPTCHA, mutation prompt, repeated 401/403/429, suspicious account warning.
-6. Treat LinkedIn export as a required backstop command for backfill/reconciliation, not only an optional fallback.
-7. Add quality gates and fixtures before real Notion writes.
-8. Keep all destination/brand logic outside LinkedIn adapter.
+1. Platform risk accepted but bounded: personal/local/read-only/low-rate/no credential leakage/no account-security bypass.
+2. Notion split into two databases from day one: Raw Ingest and Content Ideas.
+3. Default full-text policy is `summary_and_snippets` in Notion plus local full snapshot cache.
+4. Dedicated persistent browser profile is default.
+5. Hard stop conditions are explicit: login challenge, CAPTCHA, mutation prompt, repeated 401/403/429, suspicious account warning.
+6. LinkedIn export is a first-class reconciliation command.
+7. Quality gates and fixture matrix are required before real Notion writes.
+8. Destination/brand logic stays outside LinkedIn adapter.
 
 ## 2. Product boundary grill
 
@@ -628,9 +628,9 @@ Recommended answer: Ideas should retain source links internally. Public drafts s
 
 Rationale: Internal traceability always; public citation depends on format.
 
-## 14. PRD changes recommended
+## 14. PRD changes applied
 
-Apply these amendments to `docs/PRD.md` before implementation planning:
+These amendments have been folded into `docs/PRD.md` PRD v2:
 
 1. Add `Root Item ID`, `Is Repost`, `Visibility State`, `Storage Policy`, and `Processing Priority` fields to Raw Ingest schema.
 2. Add explicit full-text storage default: `summary_and_snippets` in Notion + local snapshot cache.
@@ -669,31 +669,20 @@ Apply these amendments to `docs/PRD.md` before implementation planning:
 
 ## 16. Open questions that actually need Amit
 
-Only these should remain open. Everything else above has a recommended default.
+Only one question remains important enough to keep open. Everything else has a recommended default and has been applied to `docs/PRD.md`.
 
-### O1. Which Notion parent/page should own the new Raw Ingest and Content Ideas databases?
+### O1. What are the exact brand/voice rules for each destination?
 
-Recommended next action: Amit provides target Notion parent page/database location, or implementation creates private workspace-level databases and returns links.
+Recommended default now applied: create starter profiles for Amit Tiwari site, LinkedIn post, Substack essay/newsletter, and Tiny Trauma article.
 
-Why this cannot be decided automatically: Requires workspace organization preference and permissions.
+Why this remains open: precise voice, audience, forbidden angles, preferred formats, and examples are owner/editorial decisions. The engine can start with generic profiles, but high-quality content will improve once Amit approves or supplies brand-specific examples.
 
-### O2. What are the first exact destination profiles and voice rules?
+Resolved defaults:
 
-Recommended next action: Start with four profiles: Amit Tiwari site, LinkedIn post, Substack essay, Tiny Trauma article. Amit should provide or approve concise voice/brand docs for each.
-
-Why this cannot be fully decided automatically: Brand voice and editorial strategy are subjective and need owner preference.
-
-### O3. Is Amit comfortable with local full-text snapshots for all accessible saved content?
-
-Recommended default: yes locally, no in Notion. Store full text in local encrypted/gitignored cache to improve AI processing; Notion gets summary/snippets.
-
-Why this remains open: This is a privacy/copyright comfort decision even though the engineering default is clear.
-
-### O4. Should the first implementation prioritize backfill or future incremental runs?
-
-Recommended default: build full backfill with cap plus checkpointing, then incremental reuse. If Amit wants faster first value, run `--limit 50` first.
-
-Why this remains open: Depends whether Amit wants immediate idea generation or exhaustive archive first.
+- Notion parent/page: create private workspace-level databases unless config provides a parent.
+- Full-text policy: local full snapshots, Notion summary/snippets only.
+- First run strategy: `--limit 50` for quick value, then full backfill/export reconciliation.
+- Shared package: defer until Substack parity.
 
 ## 17. Final recommendation
 
