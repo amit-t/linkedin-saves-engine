@@ -3,6 +3,8 @@ import { computeDedupKey } from '../core/dedupe.js';
 import { RawSaveSchema, type RawSave } from '../core/raw-save.js';
 import { canonicalizeUrl, inferLinkedInItemId, tryCanonicalizeUrl } from '../core/canonical-url.js';
 import { assertReadOnlyLinkedInRequest } from './write-guard.js';
+import { extractRawSavesFromLinkedInPayload } from '../adapters/linkedin/network-parser.js';
+import { mergeRawSave } from '../core/dedupe.js';
 
 export type BrowserCaptureOptions = {
   profileDir: string;
@@ -20,8 +22,20 @@ export async function captureLinkedInSaves(options: BrowserCaptureOptions): Prom
     viewport: { width: 1440, height: 1000 }
   });
   try {
+    const networkRecords: RawSave[] = [];
     context.on('request', (request) => {
       assertReadOnlyLinkedInRequest({ method: request.method(), url: request.url() });
+    });
+    context.on('response', async (response) => {
+      try {
+        const url = response.url();
+        const contentType = response.headers()['content-type'] ?? '';
+        if (!/linkedin\.com/.test(url) || !/json/i.test(contentType)) return;
+        const payload = await response.json();
+        networkRecords.push(...extractRawSavesFromLinkedInPayload(payload, { now, sourceUrl: url }));
+      } catch {
+        // Ignore non-JSON and transient response parse failures. DOM fallback still runs.
+      }
     });
     const page = context.pages()[0] ?? await context.newPage();
     await page.goto('https://www.linkedin.com/my-items/saved-posts/', { waitUntil: 'domcontentloaded', timeout: 60_000 });
@@ -72,7 +86,12 @@ export async function captureLinkedInSaves(options: BrowserCaptureOptions): Prom
       await page.mouse.wheel(0, 2500);
       await page.waitForTimeout(1200);
     }
-    return records;
+    const merged = new Map<string, RawSave>();
+    for (const record of [...networkRecords, ...records]) {
+      const existing = merged.get(record.dedupKey);
+      merged.set(record.dedupKey, existing ? mergeRawSave(existing, record) : record);
+    }
+    return Array.from(merged.values());
   } finally {
     await context.close();
   }

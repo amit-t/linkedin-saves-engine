@@ -8,7 +8,7 @@ import { captureLinkedInSaves } from './browser/linkedin-capture.js';
 import { generateIdeasForSave } from './ideas/generator.js';
 import { createNotionDatabases } from './notion/setup.js';
 import { schemaInstructions } from './notion/schema.js';
-import { planRawSaveUpserts, upsertRawSavesToNotion } from './notion/upsert.js';
+import { createContentIdeasInNotion, planRawSaveUpserts, upsertRawSavesToNotion } from './notion/upsert.js';
 import { runDemo } from './demo/run-demo.js';
 
 async function writeJson(path: string, value: unknown): Promise<void> {
@@ -88,13 +88,22 @@ program.command('generate:ideas')
   .option('--brand <path>', 'brand profile markdown path', 'brand-voices/amit-tiwari-site.md')
   .option('--surface <surface>', 'surface id', 'website_article')
   .option('--out <path>', 'write ideas JSON to path', '.demo/ideas.json')
+  .option('--write-notion', 'create idea pages in NOTION_IDEAS_DATABASE_ID')
   .action(async (opts) => {
     const parsed = JSON.parse(await readFile(opts.input, 'utf8'));
     const records = parsed.records ?? parsed.rawSaves ?? parsed;
     const profile = await loadBrandProfileFromMarkdown(opts.brand);
     const ideas = records.flatMap((record: any) => generateIdeasForSave(record, profile, { surfaceId: opts.surface }));
-    await writeJson(opts.out, { ideas });
-    console.log(`Generated ${ideas.length} ideas to ${opts.out}`);
+    if (opts.writeNotion) {
+      const token = process.env.NOTION_TOKEN;
+      const databaseId = process.env.NOTION_IDEAS_DATABASE_ID;
+      if (!token || !databaseId) throw new Error('NOTION_TOKEN and NOTION_IDEAS_DATABASE_ID required for --write-notion');
+      const summary = await createContentIdeasInNotion({ token, databaseId, ideas });
+      console.log(JSON.stringify({ ideas: ideas.length, notion: summary }, null, 2));
+    } else {
+      await writeJson(opts.out, { ideas });
+      console.log(`Generated ${ideas.length} ideas to ${opts.out}`);
+    }
   });
 
 program.command('demo')

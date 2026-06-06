@@ -1,6 +1,7 @@
 import { Client } from '@notionhq/client';
 import type { RawSave } from '../core/raw-save.js';
-import { buildRawIngestProperties } from './schema.js';
+import { buildContentIdeaProperties, buildRawIngestProperties } from './schema.js';
+import type { ContentIdea } from '../ideas/generator.js';
 
 export type UpsertSummary = { created: number; updated: number; skipped: number };
 
@@ -38,4 +39,15 @@ export async function upsertRawSavesToNotion(options: { token: string; databaseI
     }
   }
   return summary;
+}
+
+
+export async function createContentIdeasInNotion(options: { token: string; databaseId: string; ideas: ContentIdea[] }): Promise<{ created: number }> {
+  const notion = new Client({ auth: options.token });
+  let created = 0;
+  for (const idea of options.ideas) {
+    await notion.pages.create({ parent: { database_id: options.databaseId }, properties: buildContentIdeaProperties(idea) } as any);
+    created++;
+  }
+  return { created };
 }

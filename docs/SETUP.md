@@ -98,7 +98,7 @@ LinkedIn export path changes by account export package. Find the CSV containing 
 npm run dev -- import:linkedin-export --path "/path/to/Saved Items.csv" --out .demo/imported-raw-saves.json
 ```
 
-Dry-run output only. To write to Notion:
+Dry-run output only. To write raw saves to Notion:
 
 ```bash
 set -a
@@ -119,19 +119,34 @@ To create another brand later:
 2. Fill it manually, or use the global skill `brand-voice-profiler` against sample content.
 3. Run `profile:brand:validate`.
 
-## 8. Generate ideas from imported raw saves
+## 8. Generate ideas from captured/enriched raw saves
+
+Export-only rows usually do not have enough evidence for high-quality ideas. Run this against browser-captured or enriched raw saves when possible.
 
 ```bash
 npm run dev -- generate:ideas \
-  --input .demo/imported-raw-saves.json \
+  --input .demo/captured-raw-saves.json \
   --brand brand-voices/amit-tiwari-site.md \
   --surface website_article \
   --out .demo/ideas.json
 ```
 
+To create Content Ideas pages in Notion:
+
+```bash
+set -a
+source .env
+set +a
+npm run dev -- generate:ideas \
+  --input .demo/captured-raw-saves.json \
+  --brand brand-voices/amit-tiwari-site.md \
+  --surface website_article \
+  --write-notion
+```
+
 ## 9. Browser capture setup
 
-Browser capture is local and headed by default.
+Browser capture is local and headed by default. It uses network-first extraction when LinkedIn JSON payloads are visible, then DOM fallback for visible saved-item links/cards.
 
 ```bash
 npm run dev -- capture:linkedin-saves \

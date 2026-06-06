@@ -1,4 +1,5 @@
 import type { RawSave } from '../core/raw-save.js';
+import type { ContentIdea } from '../ideas/generator.js';
 
 export type NotionPropertySpec = { type: string; options?: string[] };
 export type NotionDatabaseSpec = { title: string; properties: Record<string, NotionPropertySpec> };
@@ -83,6 +84,24 @@ export function buildRawIngestProperties(rawSave: RawSave): Record<string, any> 
     'Brand Fit Scores': { rich_text: text(rawSave.brandFit ? JSON.stringify(rawSave.brandFit) : '') },
     'Idea Potential Score': { number: rawSave.ideaPotentialScore ?? null },
     'Error Code': { rich_text: text(rawSave.errorCode) }
+  };
+}
+
+
+export function buildContentIdeaProperties(idea: ContentIdea): Record<string, any> {
+  return {
+    Name: { title: title(idea.name) },
+    'Brand Profile ID': { rich_text: text(idea.brandProfileId) },
+    'Brand Name': { rich_text: text(idea.brandName) },
+    'Surface ID': { select: { name: idea.surfaceId } },
+    'Brand Voice Version': { rich_text: text(idea.brandVoiceVersion) },
+    Format: { select: { name: idea.format } },
+    Hook: { rich_text: text(idea.hook) },
+    Thesis: { rich_text: text(idea.thesis) },
+    'Source Evidence': { rich_text: text(idea.sourceEvidence.join('\n')) },
+    'Fit Score': { number: idea.fitScore },
+    Confidence: { number: idea.confidence },
+    Status: { status: { name: idea.status } }
   };
 }
 
