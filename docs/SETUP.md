@@ -55,7 +55,7 @@ NOTION_PARENT_PAGE_ID=<parent-page-id>
 ## 4. Preview Notion database schemas
 
 ```bash
-npm run dev -- setup:notion-schema
+npm run dev -- --env .env setup:notion-schema
 ```
 
 This prints the two database schemas:
@@ -71,7 +71,7 @@ No Notion writes happen.
 set -a
 source .env
 set +a
-npm run dev -- setup:notion-schema --write
+npm run dev -- --env .env setup:notion-schema --write
 ```
 
 Expected JSON:
@@ -95,7 +95,7 @@ NOTION_IDEAS_DATABASE_ID=<ideasDatabaseId>
 LinkedIn export path changes by account export package. Find the CSV containing saved items, then run:
 
 ```bash
-npm run dev -- import:linkedin-export --path "/path/to/Saved Items.csv" --out .demo/imported-raw-saves.json
+npm run dev -- --env .env sync --dry-run --export-path "/path/to/Saved Items.csv" --out .demo/imported-raw-saves.json
 ```
 
 Dry-run output only. To write raw saves to Notion:
@@ -104,13 +104,13 @@ Dry-run output only. To write raw saves to Notion:
 set -a
 source .env
 set +a
-npm run dev -- import:linkedin-export --path "/path/to/Saved Items.csv" --write-notion
+npm run dev -- --env .env sync --export-path "/path/to/Saved Items.csv"
 ```
 
 ## 7. Validate brand profile
 
 ```bash
-npm run dev -- profile:brand:validate --brand brand-voices/amit-tiwari-site.md
+npm run dev -- --env .env profile:brand:validate --brand brand-voices/amit-tiwari-site.md
 ```
 
 To create another brand later:
@@ -124,24 +124,22 @@ To create another brand later:
 Export-only rows usually do not have enough evidence for high-quality ideas. Run this against browser-captured or enriched raw saves when possible.
 
 ```bash
-npm run dev -- generate:ideas \
-  --input .demo/captured-raw-saves.json \
-  --brand brand-voices/amit-tiwari-site.md \
-  --surface website_article \
-  --out .demo/ideas.json
+npm run dev -- --env .env fetch --limit 10 --format markdown
 ```
 
-To create Content Ideas pages in Notion:
+After reviewing fetched saves, create `approved-ideas.json` in the same shape as the Instagram engine (`source_page_id`, `name`, `hook_options`, `outline`, `platform_breakdowns`). Then write approved ideas and mark sources reviewed:
 
 ```bash
 set -a
 source .env
 set +a
-npm run dev -- generate:ideas \
-  --input .demo/captured-raw-saves.json \
-  --brand brand-voices/amit-tiwari-site.md \
-  --surface website_article \
-  --write-notion
+npm run dev -- --env .env save-approved approved-ideas.json
+```
+
+Drop a rejected save:
+
+```bash
+npm run dev -- --env .env drop-save SOURCE_PAGE_ID
 ```
 
 ## 9. Browser capture setup
@@ -149,8 +147,7 @@ npm run dev -- generate:ideas \
 Browser capture is local and headed by default. It uses network-first extraction when LinkedIn JSON payloads are visible, then DOM fallback for visible saved-item links/cards.
 
 ```bash
-npm run dev -- capture:linkedin-saves \
-  --profile-dir .browser-profiles/linkedin \
+npm run dev -- --env .env sync --dry-run \
   --limit 50 \
   --out .demo/captured-raw-saves.json
 ```
@@ -175,10 +172,10 @@ Safety rules enforced:
 ```bash
 npm run doctor
 npm run demo
-npm run dev -- setup:notion-schema
-npm run dev -- profile:brand:validate --brand brand-voices/amit-tiwari-site.md
-npm run dev -- capture:linkedin-saves --limit 50 --out .demo/captured-raw-saves.json
-npm run dev -- generate:ideas --input .demo/captured-raw-saves.json --brand brand-voices/amit-tiwari-site.md --surface website_article --out .demo/captured-ideas.json
+npm run dev -- --env .env setup:notion-schema
+npm run dev -- --env .env profile:brand:validate --brand brand-voices/amit-tiwari-site.md
+npm run dev -- --env .env sync --dry-run --limit 50 --out .demo/captured-raw-saves.json
+npm run dev -- --env .env fetch --limit 10 --format markdown
 ```
 
 Only add Notion writes after dry-run output looks right.

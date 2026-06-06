@@ -51,3 +51,56 @@ export async function createContentIdeasInNotion(options: { token: string; datab
   }
   return { created };
 }
+
+
+function plainTextFromRichText(prop: any): string {
+  return (prop?.rich_text ?? []).map((item: any) => item?.plain_text ?? item?.text?.content ?? '').join('');
+}
+
+function plainTextFromTitle(prop: any): string {
+  return (prop?.title ?? []).map((item: any) => item?.plain_text ?? item?.text?.content ?? '').join('');
+}
+
+export type NotionRawSaveReviewRecord = {
+  page_id: string;
+  name: string;
+  status: string;
+  saved: string;
+  url: string;
+  author: string;
+  capture_completeness: string;
+  source_summary: string;
+  evidence_snippets: string;
+};
+
+export async function fetchUnprocessedRawSaves(options: { token: string; databaseId: string; limit: number }): Promise<NotionRawSaveReviewRecord[]> {
+  const notion = new Client({ auth: options.token });
+  const response = await (notion.databases as any).query({
+    database_id: options.databaseId,
+    page_size: Math.min(options.limit, 100),
+    filter: { property: 'Processing Status', status: { equals: 'New' } },
+    sorts: [{ property: 'Saved At', direction: 'descending' }]
+  });
+  return response.results.slice(0, options.limit).map((page: any) => {
+    const props = page.properties ?? {};
+    return {
+      page_id: page.id,
+      name: plainTextFromTitle(props.Name) || 'Untitled LinkedIn save',
+      status: props['Processing Status']?.status?.name ?? 'New',
+      saved: props['Saved At']?.date?.start ?? '',
+      url: props['Canonical URL']?.url ?? props['Original URL']?.url ?? '',
+      author: plainTextFromRichText(props['Author Name']) || '',
+      capture_completeness: props['Capture Completeness']?.select?.name ?? '',
+      source_summary: plainTextFromRichText(props['Source Summary']) || '',
+      evidence_snippets: plainTextFromRichText(props['Evidence Snippets']) || ''
+    };
+  });
+}
+
+export async function markRawSaveStatus(options: { token: string; pageId: string; status: 'Reviewed' | 'Dropped' | 'Ignored' | 'Idea Created' }): Promise<void> {
+  const notion = new Client({ auth: options.token });
+  await notion.pages.update({
+    page_id: options.pageId,
+    properties: { 'Processing Status': { status: { name: options.status } } }
+  } as any);
+}

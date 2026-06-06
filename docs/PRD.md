@@ -158,7 +158,7 @@ Use a hybrid capture strategy optimized for completeness and content quality:
 4. **Detail-page enrichment**: for incomplete or high-potential saves, open detail pages/read-only expansions with caps and rate limits.
 5. **LinkedIn export reconciliation**: import LinkedIn's `Saved Items` export as a first-class backstop for saved date/URL and missing/unavailable items.
 6. **Manual URL import fallback**: allow individual URLs for records missed by browser/export.
-7. **Notion dry-run/upsert**: write normalized, redacted records to Notion Raw Ingest only after dry-run preview or explicit `--write`.
+7. **Notion dry-run/upsert**: write normalized, redacted records to Notion Raw Ingest only when the user intentionally runs the write form of `sync`; keep `sync --dry-run` as the preview path.
 8. **Classification and fanout**: produce Content Idea candidates for configured destinations.
 
 ### Why not official API first?
@@ -206,7 +206,7 @@ Risk boundaries:
 
 ### 11.3 Export reconciliation
 
-- Provide `import:linkedin-export --path <archive-or-csv>`.
+- Provide export ingestion through the primary Instagram-style sync verb: `--env .env sync --export-path <archive-or-csv>`.
 - Parse LinkedIn export `Saved Items` for saved date and URL.
 - Match export rows to browser-captured records by platform ID when inferable, then canonical URL hash, then original URL hash.
 - Preserve export-only rows as metadata-only/tombstone records.
@@ -234,7 +234,7 @@ Risk boundaries:
 - Maintain `First Ingested At` and `Last Seen At`.
 - Preserve original URL and canonical URL.
 - Store redacted safe metadata or raw payload hash, never credentials/raw headers.
-- Track processing status: `New`, `Needs Enrichment`, `Enriched`, `Classified`, `Idea Created`, `Error`, `Ignored`.
+- Track processing status: `New`, `Needs Enrichment`, `Enriched`, `Classified`, `Idea Created`, `Reviewed`, `Dropped`, `Error`, `Ignored`.
 - Do not overwrite richer records with weaker captures unless explicit override.
 
 ### 11.6 Content Ideas
@@ -253,22 +253,24 @@ Risk boundaries:
 The engine exposes generic command packs, not one fixed output and not hard-coded brand commands:
 
 ```text
-setup:notion-schema
-capture:linkedin-saves --dry-run
-capture:linkedin-saves --write
-import:linkedin-export --path <archive-or-csv>
-enrich:raw-saves --dry-run
-profile:brand:new --brand <brand-id>
-profile:brand:seed --brand <brand-id> --samples <path...>
-profile:brand:validate --brand <brand-id>
-generate:ideas --brand <brand-id> --surface <surface-id> --dry-run
-generate:content-brief --brand <brand-id> --surface <surface-id>
-generate:draft --brand <brand-id> --surface <surface-id>
-generate:idea-clusters --brand <brand-id>
-generate:weekly-digest --brand <brand-id>
-doctor
-clear-cache
+--env .env sync --dry-run --limit 50
+--env .env sync --limit 50
+--env .env fetch --limit 10 --format markdown
+--env .env save-approved approved-ideas.json
+--env .env drop-save SOURCE_PAGE_ID
+--env .env doctor
+--env .env setup:notion-schema
+--env .env setup:notion-schema --write
 ```
+
+The primary verbs intentionally mirror the Instagram Saves Engine:
+
+- `sync`: capture/import source saves and write Raw Ingest when not dry-run.
+- `fetch`: fetch `Processing Status = New` raw saves from Notion for agent review.
+- `save-approved`: create Content Ideas from approved JSON and mark source saves `Reviewed`.
+- `drop-save`: mark rejected source saves `Dropped`.
+
+Legacy/developer aliases can exist, but docs and skills should prefer the Instagram-style verbs above.
 
 Commands should read Raw Ingest + Content Ideas + Brand Voice profiles and produce briefs/drafts. They must not auto-publish in v1.
 
@@ -414,7 +416,7 @@ Rules:
 | `Saved At` | Date | Save date/time if known/exported |
 | `First Ingested At` | Date | First ingest time |
 | `Last Seen At` | Date | Last successful capture/reconciliation |
-| `Processing Status` | Status | `New`, `Needs Enrichment`, `Enriched`, `Classified`, `Idea Created`, `Error`, `Ignored` |
+| `Processing Status` | Status | `New`, `Needs Enrichment`, `Enriched`, `Classified`, `Idea Created`, `Reviewed`, `Dropped`, `Error`, `Ignored` |
 | `Content Hash` | Rich text | Normalized content hash |
 | `Raw Payload Hash` | Rich text | Redacted raw payload hash only |
 | `Local Snapshot Path` | Rich text | Local file pointer, not uploaded content |

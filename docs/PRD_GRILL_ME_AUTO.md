@@ -441,30 +441,25 @@ Rationale: Jitter reduces load; stealth evasion increases ethical/platform risk.
 Recommended answer:
 
 ```text
-setup:notion-schema
-capture:linkedin-saves --dry-run
-capture:linkedin-saves --write
-import:linkedin-export --path <archive>
-enrich:raw-saves --dry-run
-profile:brand:new --brand <brand-id>
-profile:brand:seed --brand <brand-id> --samples <path...>
-profile:brand:validate --brand <brand-id>
-generate:ideas --brand <brand-id> --surface <surface-id> --dry-run
-generate:content-brief --brand <brand-id> --surface <surface-id>
-generate:draft --brand <brand-id> --surface <surface-id>
-generate:idea-clusters --brand <brand-id>
-generate:weekly-digest --brand <brand-id>
-doctor
-clear-cache
+--env .env sync --dry-run --limit 50
+--env .env sync --limit 50
+--env .env sync --export-path <archive-or-csv>
+--env .env fetch --limit 10 --format markdown
+--env .env save-approved approved-ideas.json
+--env .env drop-save SOURCE_PAGE_ID
+--env .env profile:brand:validate --brand <brand-id>
+--env .env setup:notion-schema
+--env .env setup:notion-schema --write
+--env .env doctor
 ```
 
-Rationale: Clear source, enrichment, fanout, and ops boundaries.
+Rationale: Mirror Instagram Saves Engine muscle memory: sync source saves, fetch review batch, save approved ideas, drop rejected saves. Keep legacy/developer aliases only as secondary convenience.
 
 ### Q56. Should dry-run be default?
 
-Recommended answer: Yes. Any Notion write requires `--write` or explicit config.
+Recommended answer: Use Instagram-style semantics. `sync --dry-run` previews; `sync` writes when Notion env is configured. Schema creation still requires `setup:notion-schema --write`.
 
-Rationale: Safer iteration.
+Rationale: Same muscle memory as Instagram Saves Engine while preserving an explicit preview path.
 
 ### Q57. How should progress be checkpointed?
 

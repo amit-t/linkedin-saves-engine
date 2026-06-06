@@ -43,3 +43,17 @@ Live verification needs:
 
 - LinkedIn login in a local headed browser profile.
 - Notion integration token and parent page/database IDs.
+
+
+## Instagram-style command structure smoke
+
+The LinkedIn engine now follows the same review/write shape as the Instagram engine:
+
+```bash
+npm run dev -- --env .env sync --dry-run --export-path fixtures/linkedin-export/saved-items.csv --limit 2 --out .demo/sync-raw-saves.json
+npm run dev -- --env .env fetch --limit 10 --format markdown
+npm run dev -- --env .env save-approved approved-ideas.json
+npm run dev -- --env .env drop-save SOURCE_PAGE_ID
+```
+
+`fetch`, `save-approved`, and `drop-save` require Notion env values except dry-run variants of write commands.

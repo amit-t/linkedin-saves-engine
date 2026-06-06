@@ -25,7 +25,7 @@ export const rawIngestSchemaSpec: NotionDatabaseSpec = {
     'First Ingested At': { type: 'date' },
     'Last Seen At': { type: 'date' },
     'Saved At': { type: 'date' },
-    'Processing Status': { type: 'status', options: ['New', 'Needs Enrichment', 'Enriched', 'Classified', 'Idea Created', 'Error', 'Ignored'] },
+    'Processing Status': { type: 'status', options: ['New', 'Needs Enrichment', 'Enriched', 'Classified', 'Idea Created', 'Reviewed', 'Dropped', 'Error', 'Ignored'] },
     'Brand Profile Candidates': { type: 'rich_text' },
     'Top Brand Fit Score': { type: 'number' },
     'Brand Fit Scores': { type: 'rich_text' },
