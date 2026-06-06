@@ -1,0 +1,30 @@
+{
+  "name": "linkedin-saves-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first LinkedIn saves to Notion raw ingest and content ideas engine.",
+  "bin": {
+    "linkedin-saves-engine": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsx src/cli.ts",
+    "demo": "tsx src/cli.ts demo --out .demo/demo-output.json",
+    "doctor": "tsx src/cli.ts doctor"
+  },
+  "dependencies": {
+    "@notionhq/client": "latest",
+    "commander": "latest",
+    "playwright": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
