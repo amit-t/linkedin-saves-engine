@@ -16,5 +16,5 @@ if [[ -f "$built_cli" ]]; then
 fi
 
 print -u2 -r -- "linkedin-saves-engine cannot start: missing local tsx and built CLI."
-print -u2 -r -- "Run: npm install && npm run build"
+print -u2 -r -- "Run: pnpm install && pnpm build"
 exit 1

@@ -26,7 +26,7 @@ async function createDatabase(notion: Client, parentPageId: string, spec: Notion
   const response = await notion.databases.create({
     parent: { type: 'page_id', page_id: parentPageId },
     title: [{ type: 'text', text: { content: spec.title } }],
-    properties: databaseProperties(spec)
+    initial_data_source: { properties: databaseProperties(spec) }
   } as any);
   return response.id;
 }

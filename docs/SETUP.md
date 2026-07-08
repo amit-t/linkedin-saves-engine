@@ -6,9 +6,9 @@ Last updated: 2026-06-06
 
 ```bash
 cd /Users/amittiwari/Projects/AmitTiwari/linkedin-saves-engine
-npm install
-npm test
-npm run build
+pnpm install
+pnpm test
+pnpm build
 zsh scripts/install_cli.zsh
 ```
 
