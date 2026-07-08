@@ -49,7 +49,7 @@ export const contentIdeasSchemaSpec: NotionDatabaseSpec = {
     'Source Evidence': { type: 'rich_text' },
     'Fit Score': { type: 'number' },
     Confidence: { type: 'number' },
-    Status: { type: 'status' }
+    Status: { type: 'status', options: ['Generated', 'Needs Review', 'Reviewed', 'Published'] }
   }
 };
 

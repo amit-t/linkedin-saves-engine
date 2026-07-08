@@ -5,6 +5,18 @@ import type { ContentIdea } from '../ideas/generator.js';
 
 export type UpsertSummary = { created: number; updated: number; skipped: number };
 
+const dataSourceCache = new Map<string, string>();
+
+async function resolveDataSourceId(notion: Client, databaseId: string): Promise<string> {
+  const cached = dataSourceCache.get(databaseId);
+  if (cached) return cached;
+  const database = await (notion.databases.retrieve as any)({ database_id: databaseId });
+  const dataSourceId = database?.data_sources?.[0]?.id;
+  if (!dataSourceId) throw new Error(`No data source found for Notion database ${databaseId}`);
+  dataSourceCache.set(databaseId, dataSourceId);
+  return dataSourceId;
+}
+
 export function planRawSaveUpserts(records: RawSave[]): { inserts: RawSave[]; duplicates: string[] } {
   const seen = new Set<string>();
   const inserts: RawSave[] = [];
@@ -22,10 +34,11 @@ export function planRawSaveUpserts(records: RawSave[]): { inserts: RawSave[]; du
 
 export async function upsertRawSavesToNotion(options: { token: string; databaseId: string; records: RawSave[] }): Promise<UpsertSummary> {
   const notion = new Client({ auth: options.token });
+  const dataSourceId = await resolveDataSourceId(notion, options.databaseId);
   const summary: UpsertSummary = { created: 0, updated: 0, skipped: 0 };
   for (const record of options.records) {
-    const existing = await (notion.databases as any).query({
-      database_id: options.databaseId,
+    const existing = await notion.dataSources.query({
+      data_source_id: dataSourceId,
       filter: { property: 'Dedup Key', rich_text: { equals: record.dedupKey } },
       page_size: 1
     } as any);
@@ -34,7 +47,7 @@ export async function upsertRawSavesToNotion(options: { token: string; databaseI
       await notion.pages.update({ page_id: existing.results[0].id, properties } as any);
       summary.updated++;
     } else {
-      await notion.pages.create({ parent: { database_id: options.databaseId }, properties } as any);
+      await notion.pages.create({ parent: { type: 'data_source_id', data_source_id: dataSourceId }, properties } as any);
       summary.created++;
     }
   }
@@ -44,9 +57,10 @@ export async function upsertRawSavesToNotion(options: { token: string; databaseI
 
 export async function createContentIdeasInNotion(options: { token: string; databaseId: string; ideas: ContentIdea[] }): Promise<{ created: number }> {
   const notion = new Client({ auth: options.token });
+  const dataSourceId = await resolveDataSourceId(notion, options.databaseId);
   let created = 0;
   for (const idea of options.ideas) {
-    await notion.pages.create({ parent: { database_id: options.databaseId }, properties: buildContentIdeaProperties(idea) } as any);
+    await notion.pages.create({ parent: { type: 'data_source_id', data_source_id: dataSourceId }, properties: buildContentIdeaProperties(idea) } as any);
     created++;
   }
   return { created };
@@ -75,12 +89,13 @@ export type NotionRawSaveReviewRecord = {
 
 export async function fetchUnprocessedRawSaves(options: { token: string; databaseId: string; limit: number }): Promise<NotionRawSaveReviewRecord[]> {
   const notion = new Client({ auth: options.token });
-  const response = await (notion.databases as any).query({
-    database_id: options.databaseId,
+  const dataSourceId = await resolveDataSourceId(notion, options.databaseId);
+  const response = await notion.dataSources.query({
+    data_source_id: dataSourceId,
     page_size: Math.min(options.limit, 100),
     filter: { property: 'Processing Status', status: { equals: 'New' } },
     sorts: [{ property: 'Saved At', direction: 'descending' }]
-  });
+  } as any);
   return response.results.slice(0, options.limit).map((page: any) => {
     const props = page.properties ?? {};
     return {
