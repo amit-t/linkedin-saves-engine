@@ -25,9 +25,14 @@
     "zod": "latest"
   },
   "devDependencies": {
-    "@types/node": "latest",
+    "@types/node": "26.1.0",
     "tsx": "latest",
     "typescript": "latest",
     "vitest": "latest"
+  },
+  "pnpm": {
+    "overrides": {
+      "std-env": "4.1.0"
+    }
   }
 }
